@@ -1,0 +1,29 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/langdb
+    username: lang
+    password: lang
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    locations: classpath:db/migration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USER}
+    password: ${MAIL_PASS}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+management:
+  endpoints.web.exposure.include: "*"
+springdoc:
+  swagger-ui:
+    path: /swagger
+
+spring.jpa.hibernate.ddl-auto: validate   # таблицы создаёт Flyway
