@@ -2,6 +2,7 @@ package by.language.platform.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -37,6 +38,15 @@ public class User {
     /* Флаг «e-mail подтверждён» → даём скидки */
     @Column(name = "registered")
     private boolean registered;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime created;
+
+    @PrePersist
+    protected void onCreate() {
+        created = LocalDateTime.now();
+    }
+
 
     protected User() {
     }
@@ -98,26 +108,42 @@ public class User {
         this.registered = registered;
     }
 
-    /* ===== Object-методы ===== */
+    public LocalDateTime getCreated() {
+        return created;
+    }
+
+    public void setCreated(LocalDateTime created) {
+        this.created = created;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof User user)) return false;
-        return id != null && Objects.equals(id, user.id);
+        return isRegistered() == user.isRegistered() &&
+                Objects.equals(getId(), user.getId()) &&
+                Objects.equals(getEmail(), user.getEmail()) &&
+                Objects.equals(getPassword(), user.getPassword()) &&
+                Objects.equals(getSurname(), user.getSurname()) &&
+                Objects.equals(getName(), user.getName()) &&
+                Objects.equals(getCreated(), user.getCreated());
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Objects.hash(getId(), getEmail(), getPassword(), getSurname(), getName(), isRegistered(), getCreated());
     }
 
     @Override
     public String toString() {
-        return "User{id=" + id +
+        return "User{" +
+                "id=" + id +
                 ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
                 ", surname='" + surname + '\'' +
                 ", name='" + name + '\'' +
                 ", registered=" + registered +
+                ", created=" + created +
                 '}';
     }
 }

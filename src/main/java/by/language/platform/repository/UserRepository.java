@@ -1,5 +1,7 @@
 package by.language.platform.repository;
 
+
+
 import by.language.platform.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +9,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 
@@ -37,9 +40,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * Возвращает кол-во изменённых строк (0 – пользователь не найден).
      */
     @Modifying(clearAutomatically = true)  // clear чтобы 1-й уровень кэша не хранил старый пароль
-    @Query("update User u set u.password = :pwd where u.id = :id")
+    @Query("update User u set u.password = :pwd, u.created = :now where u.id = :id")
     int updatePassword(@Param("id") Long id,
-                       @Param("pwd") String encodedPwd);
+                       @Param("pwd") String encodedPwd,
+                       @Param("now") LocalDateTime now);
 
 
     /** Все покупки пользователя. */
