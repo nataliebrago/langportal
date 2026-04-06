@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Schema(description = "Информация о покупке")
 public record PurchaseDto(
@@ -18,5 +19,10 @@ public record PurchaseDto(
 
         @Schema(description = "Сумма, которую реально заплатили", example = "149.99")
         @Positive
-        BigDecimal paidAmount
-) {}
+        BigDecimal paidAmount,
+
+        @Schema(description = "Дата/время создания записи", type = "string", format = "date-time",
+                accessMode = Schema.AccessMode.READ_ONLY)
+        LocalDateTime created
+) {
+}

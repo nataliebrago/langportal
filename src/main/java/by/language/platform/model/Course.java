@@ -1,6 +1,7 @@
 package by.language.platform.model;
 
 import jakarta.persistence.*;
+
 import java.util.Objects;
 
 /**
@@ -18,24 +19,40 @@ public class Course {
     @Column(nullable = false)
     private String title;
 
-     @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private double price;
 
-    protected Course() {}
+    protected Course() {
+    }
 
     public Course(String title, double price) {
         this.title = title;
         this.price = price;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -45,8 +62,12 @@ public class Course {
     }
 
     @Override
-    public int hashCode() { return getClass().hashCode(); }
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 
     @Override
-    public String toString() { return "Course{id=" + id + ", title='" + title + '\'' + ", price=" + price + '}'; }
+    public String toString() {
+        return "Course{id=" + id + ", title='" + title + '\'' + ", price=" + price + '}';
+    }
 }

@@ -1,6 +1,8 @@
 package by.language.platform.model;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -28,36 +30,87 @@ public class Purchase {
     @Column(name = "paid_amount", nullable = false, precision = 10, scale = 2)
     private double paidAmount;
 
-    protected Purchase() {}
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime created;
 
-    public Purchase(User user, Course course, double paidAmount) {
+    @PrePersist
+    protected void onCreate() {
+        created = LocalDateTime.now();
+    }
+
+    protected Purchase() {
+    }
+
+    public Purchase(User user, Course course, double paidAmount, LocalDateTime created) {
         this.user = user;
         this.course = course;
         this.paidAmount = paidAmount;
+        this.created = created;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Course getCourse() { return course; }
-    public void setCourse(Course course) { this.course = course; }
+    public User getUser() {
+        return user;
+    }
 
-    public double getPaidAmount() { return paidAmount; }
-    public void setPaidAmount(double paidAmount) { this.paidAmount = paidAmount; }
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public double getPaidAmount() {
+        return paidAmount;
+    }
+
+    public void setPaidAmount(double paidAmount) {
+        this.paidAmount = paidAmount;
+    }
+
+    public LocalDateTime getCreated() {
+        return created;
+    }
+
+    public void setCreated(LocalDateTime created) {
+        this.created = created;
+    }
+
+    @Override
+    public String toString() {
+        return "Purchase{" +
+                "id=" + id +
+                ", user=" + user +
+                ", course=" + course +
+                ", paidAmount=" + paidAmount +
+                ", created=" + created +
+                '}';
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Purchase purchase)) return false;
-        return id != null && Objects.equals(id, purchase.id);
+        return Double.compare(purchase.getPaidAmount(), getPaidAmount()) == 0
+                && Objects.equals(getId(), purchase.getId()) && Objects.equals(getUser(), purchase.getUser()) && Objects.equals(getCourse(), purchase.getCourse())
+                && Objects.equals(getCreated(), purchase.getCreated());
     }
+
     @Override
-    public int hashCode() { return getClass().hashCode(); }
-    @Override
-    public String toString() {
-        return "Purchase{id=" + id + ", user=" + user.getEmail() + ", course=" + course.getTitle() + ", paid=" + paidAmount + '}';
+    public int hashCode() {
+        return Objects.hash(getId(), getUser(), getCourse(), getPaidAmount(), getCreated());
     }
+
 }
