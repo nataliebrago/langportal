@@ -2,6 +2,7 @@ package by.language.platform.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
@@ -20,12 +21,12 @@ public class Course {
     private String title;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private double price;
+    private BigDecimal price;
 
     protected Course() {
     }
 
-    public Course(String title, double price) {
+    public Course(String title, BigDecimal price) {
         this.title = title;
         this.price = price;
     }
@@ -46,11 +47,11 @@ public class Course {
         this.title = title;
     }
 
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 

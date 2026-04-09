@@ -1,4 +1,4 @@
-package com.language.platform.language_platform;
+package by.language.platform;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

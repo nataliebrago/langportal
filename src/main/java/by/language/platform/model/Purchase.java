@@ -2,6 +2,7 @@ package by.language.platform.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -28,7 +29,7 @@ public class Purchase {
 
     /* Сколько реально заплатил (со скидкой или без) */
     @Column(name = "paid_amount", nullable = false, precision = 10, scale = 2)
-    private double paidAmount;
+    private BigDecimal paidAmount;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime created;
@@ -41,7 +42,7 @@ public class Purchase {
     protected Purchase() {
     }
 
-    public Purchase(User user, Course course, double paidAmount, LocalDateTime created) {
+    public Purchase(User user, Course course, BigDecimal paidAmount, LocalDateTime created) {
         this.user = user;
         this.course = course;
         this.paidAmount = paidAmount;
@@ -72,11 +73,11 @@ public class Purchase {
         this.course = course;
     }
 
-    public double getPaidAmount() {
+    public BigDecimal getPaidAmount() {
         return paidAmount;
     }
 
-    public void setPaidAmount(double paidAmount) {
+    public void setPaidAmount(BigDecimal paidAmount) {
         this.paidAmount = paidAmount;
     }
 
@@ -103,9 +104,11 @@ public class Purchase {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Purchase purchase)) return false;
-        return Double.compare(purchase.getPaidAmount(), getPaidAmount()) == 0
-                && Objects.equals(getId(), purchase.getId()) && Objects.equals(getUser(), purchase.getUser()) && Objects.equals(getCourse(), purchase.getCourse())
-                && Objects.equals(getCreated(), purchase.getCreated());
+        return Objects.equals(getId(), purchase.getId()) &&
+                Objects.equals(getUser(), purchase.getUser()) &&
+                Objects.equals(getCourse(), purchase.getCourse()) &&
+                Objects.equals(getPaidAmount(), purchase.getPaidAmount()) &&
+                Objects.equals(getCreated(), purchase.getCreated());
     }
 
     @Override

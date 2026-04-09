@@ -54,7 +54,7 @@ public class PurchaseService {
      * @return страница объектов {@link PurchaseDto}
      */
     public Page<PurchaseDto> getUserHistory(Long userId, Pageable pageable) {
-        return repo.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+        return repo.findByUserIdOrderByCreatedDesc(userId, pageable)
                 .map(mapper::toDto);
     }
 

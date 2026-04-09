@@ -42,7 +42,7 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
      * История покупок пользователя (сразу подтягиваем курс).
      */
     @EntityGraph(attributePaths = "course")
-    Page<Purchase> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    Page<Purchase> findByUserIdOrderByCreatedDesc(Long userId, Pageable pageable);
 
 
     /**

@@ -60,7 +60,7 @@ public class PurchaseController {
     @GetMapping("/history")
     public PageDto<PurchaseDto> getHistory(
             @RequestParam Long userId,
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC)
+            @PageableDefault(sort = "created", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {
         return PageDto.of(service.getUserHistory(userId, pageable));

@@ -1,6 +1,7 @@
 package by.language.platform.controller;
 
 import by.language.platform.dto.CourseDto;
+import by.language.platform.dto.CreateCourseRequest;
 import by.language.platform.dto.PageDto;
 import by.language.platform.service.CourseService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -18,6 +20,21 @@ import java.util.List;
 public class CourseController {
 
     private final CourseService service;
+
+    /**
+     * Создаёт новый курс.
+     *
+     * @param request данные для создания курса
+     * @return DTO созданного курса
+     */
+    @PostMapping
+    public ResponseEntity<CourseDto> createCourse(@RequestBody CreateCourseRequest request) {
+        CourseDto courseDto = service.createCourse(request);
+        return ResponseEntity
+                .created(URI.create("/api/courses/" + courseDto.id()))
+                .body(courseDto);
+    }
+
 
     /**
      * Ищет курсы по части названия (без учёта регистра).
@@ -76,19 +93,6 @@ public class CourseController {
     @GetMapping("/average-price")
     public BigDecimal getAveragePrice() {
         return service.getAveragePrice();
-    }
-
-    /**
-     * Находит курс по ID с пессимистичной блокировкой для изменения цены.
-     *
-     * Должен использоваться в админ-панели перед обновлением цены.
-     *
-     * @param id идентификатор курса
-     * @return данные курса
-     */
-    @GetMapping("/{id}/for-price-update")
-    public ResponseEntity<CourseDto> findByIdForPriceUpdate(@PathVariable Long id) {
-        return ResponseEntity.ok(service.findByIdForPriceUpdate(id));
     }
 
     /**

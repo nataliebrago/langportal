@@ -9,8 +9,10 @@
 package by.language.platform.service;
 
 import by.language.platform.dto.CourseDto;
+import by.language.platform.dto.CreateCourseRequest;
 import by.language.platform.exception.CourseNotFoundException;
 import by.language.platform.mapper.CourseMapper;
+import by.language.platform.model.Course;
 import by.language.platform.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,6 +30,19 @@ public class CourseService {
 
     private final CourseRepository repo;
     private final CourseMapper mapper;
+
+    /**
+     * Создаёт новый курс.
+     *
+     * @param request DTO с данными курса
+     * @return DTO созданного курса
+     */
+    @Transactional
+    public CourseDto createCourse(CreateCourseRequest request) {
+        Course course = new Course(request.title(), request.price());
+        Course saved = repo.save(course);
+        return mapper.toDto(saved);
+    }
 
     /**
      * Находит курсы, чьё название содержит указанную подстроку (без учёта регистра).
@@ -91,26 +106,8 @@ public class CourseService {
     }
 
     /**
-     * Находит курс по ID для безопасного обновления цены.
-     *
-     * Использует пессимистичную блокировку строки в БД, чтобы предотвратить
-     * параллельные изменения цены (например, при массовой акции).
-     *
-     * @param id идентификатор курса
-     * @return DTO найденного курса
-     * @throws CourseNotFoundException если курс не найден
-     */
-    @Transactional
-    public CourseDto findByIdForPriceUpdate(Long id) {
-        return repo.findByIdForPriceUpdate(id)
-                .map(mapper::toDto)
-                .orElseThrow(() -> new CourseNotFoundException(id));
-    }
-
-    /**
      * Обновляет цену курса.
      *
-     * Требует пессимистичной блокировки — вызовите {@link #findByIdForPriceUpdate(Long)} перед этим.
      *
      * @param id   идентификатор курса
      * @param newPrice новая цена
@@ -122,7 +119,7 @@ public class CourseService {
         var course = repo.findById(id)
                 .orElseThrow(() -> new CourseNotFoundException(id));
         if (newPrice != null) {
-            course.setPrice(newPrice.doubleValue()); // Преобразуем в double
+            course.setPrice(newPrice); // Преобразуем в double
         }
         return mapper.toDto(repo.save(course));
     }
