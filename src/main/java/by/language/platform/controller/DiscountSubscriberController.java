@@ -2,32 +2,61 @@ package by.language.platform.controller;
 
 import by.language.platform.dto.DiscountSubscriberDto;
 import by.language.platform.service.DiscountSubscriberService;
+import by.language.platform.service.UserService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/discount-subscribers")
 @RequiredArgsConstructor
+@Validated
 public class DiscountSubscriberController {
 
     private final DiscountSubscriberService service;
+    private final UserService userService;
+
 
     /**
-     * Подписывает пользователя на скидки по email.
+     * Подписывает email на получение информации о скидках.
+     * <p>
+     * Проверяет:
+     * - Корректность email формата
+     * - Существует ли пользователь с таким email
      *
-     * @param request объект с email
+     * @param request содержит email для подписки
      * @return DTO созданного подписчика
      */
+
     @PostMapping
-    public ResponseEntity<DiscountSubscriberDto> subscribe(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> subscribe(@RequestBody @Valid EmailRequest request) {
+        // Проверяем, существует ли пользователь с таким email
+        if (!userService.existsByEmail(request.email())) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse("Пользователь с email '%s' не зарегистрирован".formatted(request.email())));
+        }
+
+        // Проверка: уже подписан?
+        Optional<DiscountSubscriberDto> existing = service.findByEmail(request.email());
+        if (existing.isPresent()) {
+            return ResponseEntity.status(409).body(new ErrorResponse("Пользователь с email '%s' уже подписан".formatted(request.email())));
+        }
+
+        // Создаём нового подписчика
         DiscountSubscriberDto dto = service.subscribe(request.email());
-        return ResponseEntity.ok(dto);
+        return ResponseEntity
+                .created(URI.create("/api/discount-subscribers/" + dto.id()))
+                .body(dto);
     }
 
     /**
@@ -49,8 +78,9 @@ public class DiscountSubscriberController {
      */
     @GetMapping("/by-email")
     public ResponseEntity<DiscountSubscriberDto> findByEmail(@RequestParam @Email String email) {
-        DiscountSubscriberDto dto = service.findByEmail(email);
-        return dto != null ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();
+        return service.findByEmail(email)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     /**
@@ -84,5 +114,12 @@ public class DiscountSubscriberController {
     /**
      * DTO для получения email из тела запроса.
      */
-    public record EmailRequest(@Email(message = "Некорректный формат email") String email) {}
+    public record EmailRequest(@NotBlank(message = "Email не может быть пустым")
+                               @Email(message = "Некорректный формат email")
+                               String email) {
+    }
+
+    public record ErrorResponse(String message) {
+    }
+
 }

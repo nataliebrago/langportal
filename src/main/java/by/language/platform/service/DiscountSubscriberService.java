@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,10 +35,10 @@ public class DiscountSubscriberService {
      * @param email email пользователя
      * @return DTO подписчика или null, если не найден
      */
-    public DiscountSubscriberDto findByEmail(String email) {
+
+    public Optional<DiscountSubscriberDto> findByEmail(String email) {
         return repo.findByEmail(email)
-                .map(mapper::toDto)
-                .orElse(null);
+                .map(mapper::toDto);
     }
 
     /**

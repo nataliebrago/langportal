@@ -41,4 +41,15 @@ public class UserService {
         int rows = repo.updatePassword(id, encoder.encode(raw), java.time.LocalDateTime.now());
         if (rows == 0) throw new UserNotFoundException(id);
     }
+
+    /**
+     * Проверяет, существует ли пользователь с указанным email.
+     *
+     * @param email email для проверки
+     * @return true, если существует
+     */
+    public boolean existsByEmail(String email) {
+        return repo.existsByEmail(email);
+    }
+
 }
