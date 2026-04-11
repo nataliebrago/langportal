@@ -14,12 +14,15 @@ import by.language.platform.dto.PageDto;
 import by.language.platform.service.PurchaseService;
 import by.language.platform.dto.PurchaseDto;
 import by.language.platform.repository.PurchaseRepository.TopCourseProjection;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -29,6 +32,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/purchases")
 @RequiredArgsConstructor
+@Validated
 public class PurchaseController {
 
     private final PurchaseService service;
@@ -41,10 +45,14 @@ public class PurchaseController {
      * @return {@code true}, если курс куплен; иначе — {@code false}
      */
     @GetMapping("/check")
+    @Operation(summary = "Проверяет, приобрёл ли пользователь указанный курс")
     public boolean hasPurchased(
+            @NotNull(message = "ID пользователя не может быть пустым")
             @RequestParam Long userId,
+            @NotNull(message = "ID курса не может быть пустым")
             @RequestParam Long courseId
     ) {
+        service.checkUserAndCourseExists(userId, courseId);
         return service.hasPurchased(userId, courseId);
     }
 
@@ -58,7 +66,9 @@ public class PurchaseController {
      * @return страница объектов {@link PurchaseDto}
      */
     @GetMapping("/history")
+    @Operation(summary = " Возвращает историю покупок пользователя с пагинацией")
     public PageDto<PurchaseDto> getHistory(
+            @NotNull(message = "ID пользователя не может быть пустым")
             @RequestParam Long userId,
             @PageableDefault(sort = "created", direction = Sort.Direction.DESC)
             Pageable pageable
@@ -66,35 +76,6 @@ public class PurchaseController {
         return PageDto.of(service.getUserHistory(userId, pageable));
     }
 
-    /**
-     * Возвращает общую сумму выручки за указанный временной интервал.
-     *
-     * @param from начало периода (ISO формат: yyyy-MM-dd'T'HH:mm:ss)
-     * @param to   конец периода
-     * @return сумма всех оплат в указанном диапазоне или 0, если нет данных
-     */
-    @GetMapping("/revenue")
-    public BigDecimal getRevenue(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
-    ) {
-        return service.sumPaidBetween(from, to);
-    }
-
-    /**
-     * Возвращает количество покупок, совершённых в указанный день.
-     *
-     * @param date дата (время игнорируется, берётся весь день)
-     * @return количество покупок
-     */
-    @GetMapping("/count-today")
-    public long getCountToday(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-    ) {
-        LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end = start.plusDays(1);
-        return service.countToday(start, end);
-    }
 
     /**
      * Возвращает самый продаваемый курс за всё время.
@@ -102,9 +83,27 @@ public class PurchaseController {
      * @return объект с информацией о курсе ({@link TopCourseProjection})
      */
     @GetMapping("/top-course")
+    @Operation(summary = "Возвращает самый продаваемый курс за всё время")
     public ResponseEntity<TopCourseProjection> getTopSellingCourse() {
         return service.findTopSellingCourse()
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build());
+    }
+
+    /**
+     * Позволяет пользователю купить курс.
+     * Если курс уже куплен — возвращается ошибка 409.
+     * Если пользователь подписан на скидки — цена снижается на 15%.
+     */
+    @PostMapping
+    @Operation(summary = "Покупка курса пользователем")
+    public ResponseEntity<PurchaseDto> purchaseCourse(
+            @NotNull(message = "ID пользователя не может быть пустым")
+            @RequestParam Long userId,
+            @NotNull(message = "ID курса не может быть пустым")
+            @RequestParam Long courseId
+    ) {
+        PurchaseDto purchaseDto = service.purchaseCourse(userId, courseId);
+        return ResponseEntity.ok(purchaseDto);
     }
 }

@@ -11,10 +11,11 @@ public record CourseDto(
         Long id,
 
         @Schema(description = "Название курса", example = "English A1")
-        @NotBlank
+        @NotBlank(message = "Название курса не может быть пустым")
         String title,
 
         @Schema(description = "Цена", example = "199.99")
-        @Positive
+        @NotNull(message = "Цена не может быть null")
+        @Positive(message = "Цена должна быть больше 0")
         BigDecimal price
 ) {}

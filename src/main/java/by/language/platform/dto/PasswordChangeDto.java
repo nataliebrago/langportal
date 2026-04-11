@@ -9,7 +9,7 @@ public class PasswordChangeDto {
     private String currentPassword;
 
     @NotBlank(message = "Новый пароль не может быть пустым")
-    @Size(min = 8, message = "Новый пароль должен быть не короче 8 символов")
+    @Size(min = 6, message = "Новый пароль должен быть не короче 6 символов")
     private String newPassword;
 
     public PasswordChangeDto() {

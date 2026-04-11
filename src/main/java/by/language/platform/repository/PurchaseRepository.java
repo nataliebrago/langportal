@@ -25,19 +25,6 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
-
-    @Query("select sum(p.paidAmount) from Purchase p where p.created between :from and :to")
-    Optional<BigDecimal> sumPaidBetween(@Param("from") LocalDateTime from,
-                                        @Param("to") LocalDateTime to);
-
-    /**
-     * Кол-во покупок за день.
-     */
-    @Query("select count(p) from Purchase p where p.created >= :day and p.created < :dayPlus1")
-    long countToday(@Param("day") LocalDateTime day,
-                    @Param("dayPlus1") LocalDateTime dayPlus1);
-
-
     /**
      * История покупок пользователя (сразу подтягиваем курс).
      */

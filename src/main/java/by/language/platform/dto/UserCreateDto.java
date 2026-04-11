@@ -5,22 +5,25 @@ import jakarta.validation.constraints.*;
 
 @Schema(description = "Запрос на создание пользователя")
 public record UserCreateDto(
-        @Schema(description = "Электронная почта", example = "ivan@mail.ru")
-        @NotBlank
-        @Email
+        @Schema(description = "Email", example = "user@test.com", required = true)
+        @NotBlank(message = "Email не может быть пустым")
+        @Email(message = "Некорректный формат email")
         @Size(max = 120)
         String email,
 
-        @Schema(description = "Пароль (мин. 6 символов)", example = "qwerty123")
-        @NotBlank
+        @Schema(description = "Пароль", example = "qwerty", required = true)
+        @NotBlank(message = "Пароль не может быть пустым")
+        @Size(min = 6, message = "Пароль должен быть не менее 6 символов")
         @Size(min = 6, max = 120)
         String password,
 
-        @Schema(description = "Фамилия", example = "Иванов")
+        @Schema(description = "Фамилия", example = "Иванов", required = true)
+        @NotBlank(message = "Фамилия не может быть пустой")
         @Size(max = 120)
         String surname,
 
-        @Schema(description = "Имя", example = "Иван")
+        @Schema(description = "Имя пользователя", example = "Иван", required = true)
+        @NotBlank(message = "Имя не может быть пустым")
         @Size(max = 120)
         String name
 ) {

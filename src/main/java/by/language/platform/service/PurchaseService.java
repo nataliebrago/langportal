@@ -1,7 +1,7 @@
 package by.language.platform.service;
 /**
  * Сервис для управления покупками пользователей.
- *
+ * <p>
  * Обеспечивает бизнес-логику, связанную с операциями покупки курсов:
  * - Проверка, приобретён ли курс пользователем
  * - Получение истории покупок пользователя с пагинацией
@@ -11,8 +11,17 @@ package by.language.platform.service;
  */
 
 import by.language.platform.dto.PurchaseDto;
+import by.language.platform.exception.CourseAlreadyPurchasedException;
+import by.language.platform.exception.CourseNotFoundException;
+import by.language.platform.exception.UserNotFoundException;
 import by.language.platform.mapper.PurchaseMapper;
+import by.language.platform.model.Course;
+import by.language.platform.model.Purchase;
+import by.language.platform.model.User;
+import by.language.platform.repository.CourseRepository;
+import by.language.platform.repository.DiscountSubscriberRepository;
 import by.language.platform.repository.PurchaseRepository;
+import by.language.platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +39,10 @@ import by.language.platform.repository.PurchaseRepository.TopCourseProjection;
 @Transactional(readOnly = true)
 public class PurchaseService {
 
-    private final PurchaseRepository repo;
+    private final DiscountSubscriberRepository discountSubscriberRepository;
+    private final CourseRepository courseRepository;
+    private final UserRepository userRepository;
+    private final PurchaseRepository purchaseRepository;
     private final PurchaseMapper mapper;
 
     /**
@@ -41,12 +53,12 @@ public class PurchaseService {
      * @return {@code true}, если пользователь уже купил курс; иначе — {@code false}
      */
     public boolean hasPurchased(Long userId, Long courseId) {
-        return repo.existsByUserIdAndCourseId(userId, courseId);
+        return purchaseRepository.existsByUserIdAndCourseId(userId, courseId);
     }
 
     /**
      * Возвращает страницу истории покупок указанного пользователя.
-     *
+     * <p>
      * Данные включают информацию о курсе (название, преподаватель и т.п.)
      *
      * @param userId   идентификатор пользователя
@@ -54,40 +66,81 @@ public class PurchaseService {
      * @return страница объектов {@link PurchaseDto}
      */
     public Page<PurchaseDto> getUserHistory(Long userId, Pageable pageable) {
-        return repo.findByUserIdOrderByCreatedDesc(userId, pageable)
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException(userId);
+        }
+        return purchaseRepository.findByUserIdOrderByCreatedDesc(userId, pageable)
                 .map(mapper::toDto);
     }
 
-    /**
-     * Суммирует общую выручку по всем покупкам в указанном временном интервале.
-     *
-     * @param from начало периода (включительно)
-     * @param to   конец периода (не включительно)
-     * @return сумма всех оплаченных сумм или {@code null}, если покупок не было
-     */
-    public BigDecimal sumPaidBetween(LocalDateTime from, LocalDateTime to) {
-        return repo.sumPaidBetween(from, to).orElse(null);
-    }
-
-    /**
-     * Подсчитывает количество покупок, совершённых в течение одного дня.
-     *
-     * @param day      начало дня (например, 2025-04-05T00:00:00)
-     * @param dayPlus1 начало следующего дня (например, 2025-04-06T00:00:00)
-     * @return количество покупок
-     */
-    public long countToday(LocalDateTime day, LocalDateTime dayPlus1) {
-        return repo.countToday(day, dayPlus1);
-    }
 
     /**
      * Находит самый продаваемый курс за всё время на основе количества покупок.
-     *
+     * <p>
      * Использует нативный SQL-запрос и возвращает проекцию с минимальными данными.
-     *
      */
     public Optional<TopCourseProjection> findTopSellingCourse() {
-        return repo.findTopSellingCourse();
+        return purchaseRepository.findTopSellingCourse();
     }
 
+
+    /**
+     * Выполняет покупку курса пользователем с возможным применением скидки.
+     * <p>
+     * Операция выполняется в рамках одной транзакции:
+     * - Проверяется существование пользователя и курса
+     * - Рассчитывается финальная цена (с учётом подписки на скидки)
+     * - Создаётся запись о покупке и сохраняется в БД
+     * <p>
+     * Если на любом этапе возникает ошибка (например, пользователь не найден),
+     * транзакция откатывается, и данные не сохраняются.
+     *
+     * @param userId   ID пользователя, который совершает покупку
+     * @param courseId ID курса, который покупается
+     * @return DTO созданной покупки с применённой ценой
+     * @throws UserNotFoundException   если пользователь с указанным ID не найден
+     * @throws CourseNotFoundException если курс с указанным ID не найден
+     */
+    @Transactional
+    public PurchaseDto purchaseCourse(Long userId, Long courseId) {
+        // Проверяем, существует ли пользователь
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        // Проверяем, существует ли курс
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        // Проверяем, не куплен ли уже курс
+        if (purchaseRepository.existsByUserIdAndCourseId(userId, courseId)) {
+            throw new CourseAlreadyPurchasedException(userId, courseId);
+        }
+
+        // Базовая цена курса
+        BigDecimal basePrice = course.getPrice();
+        BigDecimal finalPrice = basePrice;
+
+        // Применяем скидку 15%, если пользователь подписан
+        if (discountSubscriberRepository.existsByEmail(user.getEmail())) {
+            finalPrice = basePrice.multiply(BigDecimal.valueOf(0.85)); // -15%
+        }
+
+        Purchase purchase = new Purchase(user, course, finalPrice, LocalDateTime.now());
+        Purchase saved = purchaseRepository.save(purchase);
+        return mapper.toDto(saved);
+    }
+
+    /**
+     * Проверяет, что пользователь и курс существуют в базе.
+     * Выбрасывает исключение, если один из них не найден.
+     */
+    @Transactional(readOnly = true)
+    public void checkUserAndCourseExists(Long userId, Long courseId) {
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException(userId);
+        }
+        if (!courseRepository.existsById(courseId)) {
+            throw new CourseNotFoundException(courseId);
+        }
+    }
 }

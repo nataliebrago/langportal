@@ -5,10 +5,16 @@ import by.language.platform.dto.PasswordChangeDto;
 import by.language.platform.dto.UserCreateDto;
 import by.language.platform.dto.UserDto;
 import by.language.platform.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import by.language.platform.exception.UserNotFoundException;
 import by.language.platform.exception.EmailBusyException;
@@ -17,6 +23,7 @@ import by.language.platform.exception.EmailBusyException;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Validated
 public class UserController {
 
     private final UserService service;
@@ -33,8 +40,14 @@ public class UserController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto create(@RequestBody UserCreateDto dto) {
-        return service.create(dto);
+    @Operation(summary = "Регистрация нового пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Пользователь успешно создан"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные (например, пустой email)"),
+            @ApiResponse(responseCode = "409", description = "Email уже используется")})
+    public ResponseEntity<UserDto> create(@RequestBody @Valid UserCreateDto dto) {
+        UserDto created = service.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     /**
@@ -45,12 +58,13 @@ public class UserController {
      * <p>
      * Результат оборачивается в {@link PageDto} для стандартизированного формата ответа.
      *
-     * @param p объект пагинации (номер страницы, размер, сортировка), автоматически извлекаемый из параметров запроса
+     * @param pageable объект пагинации (номер страницы, размер, сортировка), автоматически извлекаемый из параметров запроса
      * @return страница пользователей в формате {@link PageDto}
      */
     @GetMapping("/confirmed")
-    public PageDto<UserDto> list(@PageableDefault(size = 20) Pageable p) {
-        return PageDto.of(service.listConfirmed(p));
+    @Operation(summary = "Получение страницы подтверждённых пользователей")
+    public PageDto<UserDto> list(@PageableDefault(size = 20) Pageable pageable) {
+        return PageDto.of(service.listConfirmed(pageable));
     }
 
     /**
@@ -66,7 +80,15 @@ public class UserController {
      * @throws UserNotFoundException если пользователь с указанным ID не найден
      */
     @PatchMapping("/{id}/password")
-    public void changePassword(@PathVariable Long id, @RequestBody PasswordChangeDto dto) {
-        service.changePassword(id, dto.getNewPassword());
+    @Operation(summary = "Изменение пароля пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Пароль успешно изменён"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные (пустой пароль, слишком короткий)"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден"),
+            @ApiResponse(responseCode = "409", description = "Новый пароль совпадает со старым (опционально)")
+    })
+    public  ResponseEntity<Void> changePassword(@PathVariable Long id, @RequestBody @Valid PasswordChangeDto dto) {
+        service.changePassword(id, dto.getCurrentPassword(), dto.getNewPassword());
+        return ResponseEntity.noContent().build();
     }
 }

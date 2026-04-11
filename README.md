@@ -1,24 +1,24 @@
-# ? Language Platform — Платформа изучения языков
+#  Language Platform — Платформа изучения языков
 
 RESTful API для управления курсами, пользователями и подписками на скидки.  
 Разработано на **Spring Boot**, поддерживает валидацию, пагинацию и интеграцию с PostgreSQL.
 
 ---
 
-## ? Технологии
+##  Технологии
 
-- ? **Java 21**
-- ? **Spring Boot 3.2+**
-- ? **Spring Web, Data JPA, Validation**
-- ? **PostgreSQL** (через Docker)
-- ? **Flyway** — миграции БД
-- ? **Docker & Docker Compose**
-- ? **Swagger UI** — документация API
-- ? **JUnit 5** — тестирование
+-  **Java 21**
+-  **Spring Boot 3.2+**
+-  **Spring Web, Data JPA, Validation**
+-  **PostgreSQL** (через Docker)
+-  **Flyway** — миграции БД
+-  **Docker & Docker Compose**
+-  **Swagger UI** — документация API
+-  **JUnit 5** — тестирование
 
 ---
 
-## ? Зависимости
+##  Зависимости
 
 Убедитесь, что установлено:
 - JDK 21
@@ -27,7 +27,7 @@ RESTful API для управления курсами, пользователями и подписками на скидки.
 
 ---
 
-## ? Запуск проекта
+##  Запуск проекта
 
 ### Вариант 1: Локально (через Maven)
 bash mvn clean package mvn spring-boot:run

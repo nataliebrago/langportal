@@ -1,13 +1,18 @@
 package by.language.platform.controller;
 
 import by.language.platform.dto.CourseDto;
-import by.language.platform.dto.CreateCourseRequest;
 import by.language.platform.dto.PageDto;
 import by.language.platform.service.CourseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -17,22 +22,31 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/courses")
 @RequiredArgsConstructor
+@Validated
 public class CourseController {
 
     private final CourseService service;
 
     /**
-     * Создаёт новый курс.
+     * Эндпоинт для создания нового курса.
+     * <p>
+     * Принимает данные в формате JSON, валидирует их и передаёт на обработку в {@link CourseService}.
+     * При успешном создании возвращает объект {@link CourseDto} и статус {@code 201 Created}.
      *
-     * @param request данные для создания курса
-     * @return DTO созданного курса
+     * @param request объект с данными для создания курса (название, цена)
+     * @return созданный курс в формате {@link CourseDto}
      */
     @PostMapping
-    public ResponseEntity<CourseDto> createCourse(@RequestBody CreateCourseRequest request) {
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Создание нового курса")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Курс успешно создан"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные (например, пустое название или цена <= 0)"),
+            @ApiResponse(responseCode = "409", description = "Курс с таким названием уже существует")
+    })
+    public ResponseEntity<CourseDto> createCourse(@RequestBody @Valid CourseDto request) {
         CourseDto courseDto = service.createCourse(request);
-        return ResponseEntity
-                .created(URI.create("/api/courses/" + courseDto.id()))
-                .body(courseDto);
+        return ResponseEntity.created(URI.create("/api/courses/" + courseDto.id())).body(courseDto);
     }
 
 
@@ -43,6 +57,7 @@ public class CourseController {
      * @return список курсов, содержащих подстроку в названии
      */
     @GetMapping("/search")
+    @Operation(summary = "Ищет курсы по части названия (без учёта регистра)")
     public List<CourseDto> searchByTitle(@RequestParam String title) {
         return service.searchByTitle(title);
     }
@@ -54,60 +69,28 @@ public class CourseController {
      * @return список курсов
      */
     @GetMapping("/cheaper-than")
+    @Operation(summary = "Возвращает все курсы дешевле указанной цены.")
     public List<CourseDto> findCheaperThan(@RequestParam BigDecimal maxPrice) {
         return service.findCheaperThan(maxPrice);
     }
 
     /**
-     * Возвращает страницу курсов в заданном диапазоне цен.
-     *
-     * @param min      минимальная цена
-     * @param max      максимальная цена
-     * @param pageable параметры пагинации (page, size, sort)
-     * @return страница курсов
-     */
-    @GetMapping("/by-price")
-    public PageDto<CourseDto> findByPriceRange(
-            @RequestParam BigDecimal min,
-            @RequestParam BigDecimal max,
-            @PageableDefault(size = 10) Pageable pageable
-    ) {
-        return PageDto.of(service.findByPriceRange(min, max, pageable));
-    }
-
-    /**
-     * Возвращает 3 самых дорогих курса платформы.
-     *
-     * @return список из трёх курсов
-     */
-    @GetMapping("/top-expensive")
-    public List<CourseDto> findTop3Expensive() {
-        return service.findTop3Expensive();
-    }
-
-    /**
-     * Возвращает среднюю цену всех курсов.
-     *
-     * @return средняя цена или 0, если курсов нет
-     */
-    @GetMapping("/average-price")
-    public BigDecimal getAveragePrice() {
-        return service.getAveragePrice();
-    }
-
-    /**
      * Обновляет цену курса.
      *
-     * Рекомендуется вызывать после {@code /for-price-update}, чтобы избежать гонки условий.
-     *
-     * @param id       идентификатор курса
-     * @param request  объект с новой ценой (в поле "price")
+     * @param id      идентификатор курса
+     * @param request объект с новой ценой (в поле "price")
      * @return обновлённый курс
      */
     @PatchMapping("/{id}/price")
+    @Operation(summary = "Обновление цены курса")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Цена успешно обновлена"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные (цена пустая или <= 0)"),
+            @ApiResponse(responseCode = "404", description = "Курс не найден")
+    })
     public ResponseEntity<CourseDto> updatePrice(
             @PathVariable Long id,
-            @RequestBody PriceUpdateRequest request
+            @RequestBody @Valid PriceUpdateRequest request
     ) {
         CourseDto updated = service.updatePrice(id, request.price());
         return ResponseEntity.ok(updated);
@@ -116,5 +99,9 @@ public class CourseController {
     /**
      * DTO для обновления цены курса.
      */
-    public record PriceUpdateRequest(BigDecimal price) {}
+    public record PriceUpdateRequest(
+            @NotNull(message = "Цена не может быть null")
+            @Positive(message = "Цена должна быть больше 0")
+            BigDecimal price
+    ) {}
 }

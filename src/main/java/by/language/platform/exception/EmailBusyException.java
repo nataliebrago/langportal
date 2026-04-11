@@ -6,11 +6,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.CONFLICT)   // 409 Conflict
 public class EmailBusyException extends RuntimeException {
 
-    public EmailBusyException() {
-        super("Email already in use");
-    }
-
     public EmailBusyException(String email) {
-        super("Email '" + email + "' is already busy");
+        super("Email '" + email + "' уже заргестрирован");
     }
 }

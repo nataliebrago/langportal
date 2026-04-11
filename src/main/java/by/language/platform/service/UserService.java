@@ -10,6 +10,7 @@ import by.language.platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,8 @@ public class UserService {
 
     @Transactional
     public UserDto create(UserCreateDto dto) {
-        if (repo.existsByEmail(dto.email())) throw new EmailBusyException();
+        if (repo.existsByEmail(dto.email()))
+            throw new EmailBusyException(dto.email());
         User u = mapper.toEntity(dto);
         u.setPassword(encoder.encode(dto.password()));
         u.setRegistered(true);
@@ -37,9 +39,20 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(Long id, String raw) {
-        int rows = repo.updatePassword(id, encoder.encode(raw), java.time.LocalDateTime.now());
-        if (rows == 0) throw new UserNotFoundException(id);
+    public void changePassword(Long id, String currentRaw, String newRaw) {
+        User user = repo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        if (!encoder.matches(currentRaw, user.getPassword())) {
+            throw new BadCredentialsException("Неверный текущий пароль");
+        }
+
+        if (encoder.matches(newRaw, user.getPassword())) {
+            throw new IllegalArgumentException("Новый пароль совпадает со старым");
+        }
+
+        user.setPassword(encoder.encode(newRaw));
+        repo.save(user);
     }
 
     /**
