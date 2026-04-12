@@ -14,7 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import by.language.platform.exception.UserNotFoundException;
 import by.language.platform.exception.EmailBusyException;
@@ -23,7 +22,6 @@ import by.language.platform.exception.EmailBusyException;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@Validated
 public class UserController {
 
     private final UserService service;

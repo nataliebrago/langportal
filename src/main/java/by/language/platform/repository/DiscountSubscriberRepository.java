@@ -17,13 +17,9 @@ public interface DiscountSubscriberRepository extends JpaRepository<DiscountSubs
 
     Optional<DiscountSubscriber> findByEmail(String email);
 
-    boolean existsByEmail(String email);
+    boolean existsByEmailIgnoreCase(String email);
 
-    /**
-     * Подписались за последние 7 дней – для аналитики.
-     */
-    @Query("select d from DiscountSubscriber d where d.created >= :weekAgo")
-    List<DiscountSubscriber> findNewSubscribers(@Param("weekAgo") LocalDateTime weekAgo);
+    boolean existsByEmail(String email);
 
     /**
      * Кол-во подписчиков на текущий момент времени.

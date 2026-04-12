@@ -25,8 +25,12 @@ public class DiscountSubscriberService {
      * @param email email пользователя
      * @return true, если уже подписан
      */
+    @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
-        return repo.existsByEmail(email);
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        return repo.existsByEmailIgnoreCase(email.trim());
     }
 
     /**
@@ -39,19 +43,6 @@ public class DiscountSubscriberService {
     public Optional<DiscountSubscriberDto> findByEmail(String email) {
         return repo.findByEmail(email)
                 .map(mapper::toDto);
-    }
-
-    /**
-     * Возвращает список новых подписчиков за последние 7 дней.
-     *
-     * @param weekAgo дата 7 дней назад (обычно LocalDateTime.now().minusDays(7))
-     * @return список подписчиков
-     */
-    public List<DiscountSubscriberDto> findNewSubscribers(LocalDateTime weekAgo) {
-        return repo.findNewSubscribers(weekAgo)
-                .stream()
-                .map(mapper::toDto)
-                .toList();
     }
 
     /**

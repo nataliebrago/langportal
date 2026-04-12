@@ -14,17 +14,17 @@ public record UserCreateDto(
         @Schema(description = "Пароль", example = "qwerty", required = true)
         @NotBlank(message = "Пароль не может быть пустым")
         @Size(min = 6, message = "Пароль должен быть не менее 6 символов")
-        @Size(min = 6, max = 120)
+        @Size(max = 120, message = "Пароль должен быть не более 120 символов")
         String password,
 
         @Schema(description = "Фамилия", example = "Иванов", required = true)
         @NotBlank(message = "Фамилия не может быть пустой")
-        @Size(max = 120)
+        @Size(max = 120,message = "Фамилия должна быть не более 120 символов")
         String surname,
 
         @Schema(description = "Имя пользователя", example = "Иван", required = true)
         @NotBlank(message = "Имя не может быть пустым")
-        @Size(max = 120)
+        @Size(max = 120, message = "Имя пользователя должно  быть не более 120 символов")
         String name
 ) {
 }

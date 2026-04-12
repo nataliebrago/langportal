@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class EmailBusyException extends RuntimeException {
 
     public EmailBusyException(String email) {
-        super("Email '" + email + "' уже заргестрирован");
+        super("Email '" + email + "' уже зарегистрирован");
     }
 }
