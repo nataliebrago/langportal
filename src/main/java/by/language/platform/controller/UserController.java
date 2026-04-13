@@ -20,7 +20,7 @@ import by.language.platform.exception.EmailBusyException;
 
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 

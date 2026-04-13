@@ -17,7 +17,7 @@ import java.net.URI;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/discount-subscribers")
+@RequestMapping("/discount-subscribers")
 @RequiredArgsConstructor
 @Validated
 public class DiscountSubscriberController {
