@@ -9,9 +9,6 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -19,9 +16,6 @@ import java.util.Optional;
  */
 @Repository
 public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
-
-
-    List<Purchase> findByUser(User user);
 
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
@@ -48,9 +42,5 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
     interface TopCourseProjection {
         Long getId();
-
-        String getTitle();
-
-        Long getCnt();
     }
 }

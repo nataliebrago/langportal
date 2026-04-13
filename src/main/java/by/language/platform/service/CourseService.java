@@ -16,8 +16,6 @@ import by.language.platform.mapper.CourseMapper;
 import by.language.platform.model.Course;
 import by.language.platform.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

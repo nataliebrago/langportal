@@ -1,8 +1,13 @@
 server:
   port: 8080
-  servlet: # ← новое
-    context-path: /api   # ← новое
 spring:
+
+  security:
+    user:
+      name: admin
+      password: $2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG
+      roles: ADMIN
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5432/language_db}
     username: ${SPRING_DATASOURCE_USERNAME:admin}

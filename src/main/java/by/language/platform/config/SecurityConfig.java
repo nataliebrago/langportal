@@ -8,6 +8,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -17,27 +20,21 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable()) // для Swagger UI
+                        .frameOptions(frame -> frame.disable())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/v3/api-docs",
-                                "/v3/api-docs/**",
-                                "/webjars/**",
-                                "/actuator/**"
-                        ).permitAll()
-                        .anyRequest().permitAll() // 🔥 ВРЕМЕННО: разрешить всё
-                );
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/webjars/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/courses/search", "/courses/cheaper-than").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(withDefaults())
+                .formLogin(form -> form.disable());
 
         return http.build();
     }
 
-
-    /**
-     * Предоставляет реализацию PasswordEncoder на основе bcrypt.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
