@@ -1,10 +1,12 @@
 package by.language.platform.service;
 
 
+import by.language.platform.dto.DiscountSubscriberDto;
 import by.language.platform.dto.UserCreateDto;
 import by.language.platform.dto.UserDto;
 import by.language.platform.exception.EmailBusyException;
 import by.language.platform.mapper.UserMapper;
+import by.language.platform.model.Role;
 import by.language.platform.model.User;
 import by.language.platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import by.language.platform.exception.UserNotFoundException;
+
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -29,6 +34,7 @@ public class UserService {
             throw new EmailBusyException(dto.email());
         User u = mapper.toEntity(dto);
         u.setPassword(encoder.encode(dto.password()));
+        u.setRole(Role.USER);
         u.setRegistered(true);
         return mapper.toDto(repo.save(u));
     }
@@ -63,6 +69,10 @@ public class UserService {
      */
     public boolean existsByEmail(String email) {
         return repo.existsByEmail(email);
+    }
+
+    public User findByEmail(String email) {
+        return repo.findByEmail(email);
     }
 
 }

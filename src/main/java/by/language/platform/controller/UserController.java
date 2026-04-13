@@ -4,6 +4,8 @@ import by.language.platform.dto.PageDto;
 import by.language.platform.dto.PasswordChangeDto;
 import by.language.platform.dto.UserCreateDto;
 import by.language.platform.dto.UserDto;
+import by.language.platform.model.Role;
+import by.language.platform.model.User;
 import by.language.platform.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import by.language.platform.exception.UserNotFoundException;
 import by.language.platform.exception.EmailBusyException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -87,11 +90,22 @@ public class UserController {
     @Operation(summary = "Изменение пароля пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Пароль успешно изменён"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные (пустой пароль, слишком короткий)"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден"),
-            @ApiResponse(responseCode = "409", description = "Новый пароль совпадает со старым (опционально)")
+            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
+            @ApiResponse(responseCode = "403", description = "Доступ запрещён"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
-    public  ResponseEntity<Void> changePassword(@PathVariable Long id, @RequestBody @Valid PasswordChangeDto dto) {
+    public ResponseEntity<Void> changePassword(
+            @PathVariable Long id,
+            @RequestBody @Valid PasswordChangeDto dto,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        User currentUser = service.findByEmail(username);
+
+        if (currentUser.getRole().equals(Role.USER) && !currentUser.getId().equals(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         service.changePassword(id, dto.getCurrentPassword(), dto.getNewPassword());
         return ResponseEntity.noContent().build();
     }

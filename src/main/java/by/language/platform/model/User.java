@@ -42,6 +42,10 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime created;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @PrePersist
     protected void onCreate() {
         created = LocalDateTime.now();
@@ -51,12 +55,13 @@ public class User {
     protected User() {
     }
 
-    public User(String email, String password, String surname, String name, boolean registered) {
+    public User(String email, String password, String surname, String name, boolean registered, Role role) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.surname = surname;
         this.registered = registered;
+        this.role = role;
     }
 
     /* ===== Getters / Setters ===== */
@@ -116,34 +121,24 @@ public class User {
         this.created = created;
     }
 
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof User user)) return false;
-        return isRegistered() == user.isRegistered() &&
-                Objects.equals(getId(), user.getId()) &&
-                Objects.equals(getEmail(), user.getEmail()) &&
-                Objects.equals(getPassword(), user.getPassword()) &&
-                Objects.equals(getSurname(), user.getSurname()) &&
-                Objects.equals(getName(), user.getName()) &&
-                Objects.equals(getCreated(), user.getCreated());
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return registered == user.registered && Objects.equals(id, user.id) && Objects.equals(email, user.email) && Objects.equals(password, user.password) && Objects.equals(surname, user.surname) && Objects.equals(name, user.name) && Objects.equals(created, user.created) && role == user.role;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getEmail(), getPassword(), getSurname(), getName(), isRegistered(), getCreated());
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
-                ", surname='" + surname + '\'' +
-                ", name='" + name + '\'' +
-                ", registered=" + registered +
-                ", created=" + created +
-                '}';
+        return Objects.hash(id, email, password, surname, name, registered, created, role);
     }
 }
