@@ -1,7 +1,6 @@
 package by.language.platform.repository;
 
 
-
 import by.language.platform.model.DiscountSubscriber;
 import by.language.platform.model.User;
 import org.springframework.data.domain.Page;
@@ -18,12 +17,18 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    /** Проверка уникальности перед созданием. */
+    /**
+     * Проверка уникальности перед созданием.
+     */
     boolean existsByEmail(String email);
 
-    /** Все подтвердившие e-mail (registered = true). */
+    /**
+     * Все подтвердившие e-mail (registered = true).
+     */
     @Query("select u from User u where u.registered = true")
     Page<User> findAllConfirmed(Pageable pageable);
 
     User findByEmail(String email);
+
+    boolean existsById(Long userId);
 }

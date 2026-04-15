@@ -2,8 +2,10 @@ package by.language.platform.config;
 
 import by.language.platform.model.Role;
 import by.language.platform.security.JwtFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -12,10 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import static by.language.platform.model.Role.ADMIN;
-
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class JWTSecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -30,37 +31,43 @@ public class JWTSecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // --- Публичные ---
+                        // --- Документация ---
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/webjars/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+
+                        // --- Авторизация ---
                         .requestMatchers("/auth/login").permitAll()
 
-                        // --- Курсы ---
-                        .requestMatchers("/courses/search", "/courses/cheaper-than").permitAll()
-                        .requestMatchers("/courses").hasRole("ADMIN")
-                        .requestMatchers("/courses/**").hasRole("ADMIN")
-
                         // --- Пользователи ---
-                       // .requestMatchers("/users").hasRole("ADMIN")
-
                         .requestMatchers("/users").permitAll()
-                        .requestMatchers("/users/confirmed").hasRole(Role.ADMIN.name())
-                        .requestMatchers("/users/{id}/password").hasAnyRole(Role.ADMIN.name(), Role.USER.name())
+
+                        // --- Курсы ---
+                        .requestMatchers("/courses/search").permitAll()
+                        .requestMatchers("/courses/cheaper-than").permitAll()
 
                         // --- Покупки ---
-                        .requestMatchers("/purchases/check").permitAll()
-                        .requestMatchers("/purchases/history").hasAnyRole(Role.ADMIN.name(),Role.USER.name())
                         .requestMatchers("/purchases/top-course").permitAll()
-                        .requestMatchers("/purchases").hasAnyRole(Role.ADMIN.name(), Role.USER.name())
 
                         // --- Скидки ---
                         .requestMatchers("/discount-subscribers/exists").permitAll()
                         .requestMatchers("/discount-subscribers/count").permitAll()
-                        .requestMatchers("/discount-subscribers").hasAnyRole(Role.ADMIN.name(), Role.USER.name())
-                        .requestMatchers("/discount-subscribers/by-email").hasAnyRole(Role.ADMIN.name(),Role.USER.name())
 
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        // Вызывается, когда нет аутентификации
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Authentication required\"}");
+                        })
+                        // Вызывается, когда есть аутентификация, но нет прав
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Access denied\"}");
+                        })
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

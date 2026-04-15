@@ -75,4 +75,8 @@ public class UserService {
         return repo.findByEmail(email);
     }
 
+    public boolean existsById(Long userId) {
+        return repo.existsById(userId);
+    }
+
 }

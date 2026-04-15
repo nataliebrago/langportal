@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,6 +46,7 @@ public class CourseController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Создание нового курса")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Курс успешно создан"),
@@ -64,6 +66,7 @@ public class CourseController {
      * @return список курсов, содержащих подстроку в названии
      */
     @GetMapping("/search")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Ищет курсы по части названия (без учёта регистра)")
     public List<CourseDto> searchByTitle(@RequestParam String title) {
         return service.searchByTitle(title);
@@ -76,6 +79,7 @@ public class CourseController {
      * @return список курсов
      */
     @GetMapping("/cheaper-than")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Возвращает все курсы дешевле указанной цены.")
     public List<CourseDto> findCheaperThan(@RequestParam BigDecimal maxPrice) {
         return service.findCheaperThan(maxPrice);
@@ -89,6 +93,7 @@ public class CourseController {
      * @return обновлённый курс
      */
     @PatchMapping("/{id}/price")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Обновление цены курса")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Цена успешно обновлена"),
@@ -110,5 +115,6 @@ public class CourseController {
             @NotNull(message = "Цена не может быть null")
             @Positive(message = "Цена должна быть больше 0")
             BigDecimal price
-    ) {}
+    ) {
+    }
 }

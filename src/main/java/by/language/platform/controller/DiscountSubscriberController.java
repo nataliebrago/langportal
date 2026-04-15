@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,6 +45,7 @@ public class DiscountSubscriberController {
      */
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Подписывает email на получение информации о скидках.")
     public ResponseEntity<?> subscribe(@RequestBody @Valid EmailRequest request) {
         if (!userService.existsByEmail(request.email())) {
@@ -69,6 +71,7 @@ public class DiscountSubscriberController {
      * @return true, если подписан; иначе false
      */
     @GetMapping("/exists")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Проверяет, подписан ли пользователь с указанным email")
     public boolean existsByEmail(@RequestParam
                                  @Email(message = "Некорректный формат email")
@@ -84,6 +87,7 @@ public class DiscountSubscriberController {
      * @return DTO подписчика или статус 404, если не найден
      */
     @GetMapping("/by-email")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Возвращает данные подписчика по email")
     public ResponseEntity<?> findByEmail(
             @RequestParam
@@ -103,6 +107,7 @@ public class DiscountSubscriberController {
      * @return общее число подписчиков
      */
     @GetMapping("/count")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Возвращает общее количество подписчиков на скидки")
     public long getTotalCount() {
         return service.countAllSubscribers();

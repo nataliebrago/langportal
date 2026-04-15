@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import by.language.platform.exception.UserNotFoundException;
 import by.language.platform.exception.EmailBusyException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,6 +48,7 @@ public class UserController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Регистрация нового пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Пользователь успешно создан"),
@@ -69,6 +71,7 @@ public class UserController {
      * @return страница пользователей в формате {@link PageDto}
      */
     @GetMapping("/confirmed")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Получение страницы подтверждённых пользователей")
     public PageDto<UserDto> list(@PageableDefault(size = 20) Pageable pageable) {
         return PageDto.of(service.listConfirmed(pageable));
@@ -87,6 +90,7 @@ public class UserController {
      * @throws UserNotFoundException если пользователь с указанным ID не найден
      */
     @PatchMapping("/{id}/password")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @Operation(summary = "Изменение пароля пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Пароль успешно изменён"),

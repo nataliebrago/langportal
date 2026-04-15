@@ -1,7 +1,6 @@
 package by.language.platform.security;
 
 import by.language.platform.utils.JwtUtil;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,26 +25,38 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
+        String uri = request.getRequestURI();
+        if (isPublicEndpoint(uri)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String header = request.getHeader("Authorization");
+
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
             try {
-                if (jwtUtil.validateToken(token, jwtUtil.getUsernameFromToken(token))) {
-                    String username = jwtUtil.getUsernameFromToken(token);
+                String username = jwtUtil.getUsernameFromToken(token);
+                if (username != null && jwtUtil.validateToken(token, username)) {
                     String role = jwtUtil.getRoleFromToken(token);
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null, java.util.Collections.singletonList(() -> "ROLE_" + role));
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            username,
+                            null,
+                            java.util.Collections.singletonList(() -> "ROLE_" + role)
+                    );
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
-            } catch (ExpiredJwtException e) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Token expired");
-                return;
             } catch (Exception e) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid token");
-                return;
             }
         }
+
         chain.doFilter(request, response);
+    }
+
+    private boolean isPublicEndpoint(String uri) {
+        return uri.equals("/auth/login")
+                || uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/swagger-ui")
+                || uri.equals("/actuator/health");
     }
 }
